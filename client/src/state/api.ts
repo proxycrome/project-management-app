@@ -81,7 +81,7 @@ export const api = createApi({
       const session = await fetchAuthSession();
       const { accessToken } = session.tokens ?? {};
       if (accessToken) {
-        headers.set("Anthorization", `Bearer ${accessToken}`);
+        headers.set("Authorization", `Bearer ${accessToken}`);
       }
       return headers;
     },
