@@ -2,9 +2,10 @@
 
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { setIsSidebarCollapsed } from "@/state";
-import { useGetProjectsQuery } from "@/state/api";
+import { useGetAuthUserQuery, useGetProjectsQuery } from "@/state/api";
+import { signOut } from "aws-amplify/auth";
 import {
-    AlertCircle,
+  AlertCircle,
   AlertOctagon,
   AlertTriangle,
   Briefcase,
@@ -38,6 +39,20 @@ const Sidebar = () => {
     (state) => state.global.isSidebarCollapsed,
   );
 
+  const { data: currentUser } = useGetAuthUserQuery({});
+
+  const handleSignout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
+
+  if (!currentUser) return null;
+
+  const currentUserDetails = currentUser?.userDetails;
+
   const sidebarClassNames = `fixed flex flex-col h-[100%] justify-between shadow-xl
   transition-all duration-300 h-full z-40 dark:bg-black overflow-y-auto bg-white overflow-x-hidden
   ${isSidebarCollapsed ? "w-0 hidden" : "w-64"}`;
@@ -64,7 +79,12 @@ const Sidebar = () => {
 
         {/* TEAM */}
         <div className="flex items-center gap-5 border-y-[1.5px] border-gray-200 px-8 py-4 dark:border-gray-700">
-          <Image src="https://pm-s3buc-images.s3.us-east-1.amazonaws.com/logo.png" alt="logo" width={40} height={40} />
+          <Image
+            src="https://pm-s3buc-images.s3.us-east-1.amazonaws.com/logo.png"
+            alt="logo"
+            width={40}
+            height={40}
+          />
           <div>
             <h3 className="text-[10px] font-bold tracking-wide dark:text-gray-200">
               ProjectMG TEAM
@@ -98,14 +118,15 @@ const Sidebar = () => {
           )}
         </button>
         {/* LIST PROJECTS */}
-        {showProjects && projects?.map((project) => (
-          <SidebarLink 
-            key={project.id}
-            icon={Briefcase}
-            label={project.name}
-            href={`/projects/${project.id}`}
-          />
-        ))}
+        {showProjects &&
+          projects?.map((project) => (
+            <SidebarLink
+              key={project.id}
+              icon={Briefcase}
+              label={project.name}
+              href={`/projects/${project.id}`}
+            />
+          ))}
 
         {/* PRIORITIES LINKS */}
         <button
@@ -122,13 +143,55 @@ const Sidebar = () => {
 
         {showPriority && (
           <>
-            <SidebarLink icon={AlertCircle} label="Urgent" href="/priority/urgent" />
-            <SidebarLink icon={ShieldAlert} label="High" href="/priority/high" />
-            <SidebarLink icon={AlertTriangle} label="Medium" href="/priority/medium" />
+            <SidebarLink
+              icon={AlertCircle}
+              label="Urgent"
+              href="/priority/urgent"
+            />
+            <SidebarLink
+              icon={ShieldAlert}
+              label="High"
+              href="/priority/high"
+            />
+            <SidebarLink
+              icon={AlertTriangle}
+              label="Medium"
+              href="/priority/medium"
+            />
             <SidebarLink icon={AlertOctagon} label="Low" href="/priority/low" />
-            <SidebarLink icon={Layers3} label="Backlog" href="/priority/backlog" />
+            <SidebarLink
+              icon={Layers3}
+              label="Backlog"
+              href="/priority/backlog"
+            />
           </>
         )}
+      </div>
+      <div className="z-10 mt-32 flex w-full flex-col items-center gap-4 bg-white px-8 py-4 dark:bg-black md:hidden">
+        <div className="flex w-full items-center">
+          <div className="align-center flex h-9 w-9 justify-center">
+            {!!currentUserDetails?.profilePictureUrl ? (
+              <Image
+                src={`https://pm-s3buc-images.s3.us-east-1.amazonaws.com/${currentUserDetails?.profilePictureUrl}`}
+                alt={currentUserDetails?.username || "User Profile Picture"}
+                width={100}
+                height={50}
+                className="h-full rounded-full object-cover"
+              />
+            ) : (
+              <User className="h-6 w-6 cursor-pointer self-center rounded-full dark:text-white" />
+            )}
+          </div>
+          <span className="mx-3 text-gray-800 dark:text-white">
+            {currentUserDetails?.username}
+          </span>
+          <button
+            className="self-start rounded bg-blue-400 px-4 py-3 text-xs font-bold text-white hover:bg-blue-500 md:block"
+            onClick={handleSignout}
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </div>
   );
